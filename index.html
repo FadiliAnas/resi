@@ -3,32 +3,47 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Générateur de Lettre de Résiliation</title>
+  <title>Confirmation de Résiliation</title>
   <style>
+    :root {
+      --primary-color: #4CAF50;
+      --secondary-color: #45a049;
+      --bg-color: #f5f7fa;
+      --card-bg: #ffffff;
+      --text-color: #333;
+      --border-radius: 8px;
+      --box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+      --font-family: 'Roboto', sans-serif;
+    }
+
     body {
-      font-family: Arial, sans-serif;
-      margin: 20px;
-      background-color: #f0f0f0;
+      margin: 0;
+      padding: 20px;
+      font-family: var(--font-family);
+      background: var(--bg-color);
+      color: var(--text-color);
+    }
+
+    h1, h2 {
+      text-align: center;
+      margin-bottom: 20px;
     }
 
     .container {
       display: flex;
-      gap: 20px;
       flex-wrap: wrap;
+      gap: 20px;
+      justify-content: center;
     }
 
     .form-container, .output-container {
-      background-color: white;
+      background: var(--card-bg);
       padding: 20px;
-      border-radius: 8px;
-      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+      border-radius: var(--border-radius);
+      box-shadow: var(--box-shadow);
       flex: 1;
-      min-width: 300px;
-    }
-
-    h1 {
-      color: #333;
-      text-align: center;
+      min-width: 320px;
+      max-width: 500px;
     }
 
     .form-group {
@@ -38,30 +53,31 @@
     label {
       display: block;
       margin-bottom: 5px;
-      color: #555;
+      font-weight: bold;
     }
 
     input, select {
       width: 100%;
-      padding: 8px;
+      padding: 10px;
       border: 1px solid #ddd;
-      border-radius: 4px;
+      border-radius: var(--border-radius);
       box-sizing: border-box;
+      font-size: 1rem;
     }
 
     button {
-      background-color: #4CAF50;
-      color: white;
-      padding: 10px 20px;
+      background: var(--primary-color);
+      color: #fff;
       border: none;
-      border-radius: 4px;
+      padding: 10px;
+      border-radius: var(--border-radius);
+      font-size: 1rem;
       cursor: pointer;
-      width: 100%;
-      margin-top: 10px;
+      transition: background 0.3s ease;
     }
 
     button:hover {
-      background-color: #45a049;
+      background: var(--secondary-color);
     }
 
     .output-text {
@@ -69,66 +85,69 @@
       line-height: 1.6;
       border: 1px solid #ddd;
       padding: 20px;
-      border-radius: 4px;
+      border-radius: var(--border-radius);
+      background: #fafafa;
       margin-top: 20px;
+      font-size: 0.95rem;
+    }
+
+    .button-container {
+      display: flex;
+      gap: 10px;
+      margin-top: 10px;
+      justify-content: center;
     }
 
     @media (max-width: 768px) {
       .container {
         flex-direction: column;
+        align-items: center;
       }
     }
   </style>
+  <!-- Include jsPDF library -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
 </head>
 <body>
-  <h1>Confirmation de Resiliation</h1>
-
+  <h1>Confirmation de Résiliation</h1>
   <div class="container">
     <div class="form-container">
       <div class="form-group">
         <label>Nom du Client:</label>
         <input type="text" id="clientName" required>
       </div>
-
       <div class="form-group">
         <label>Montant:</label>
         <input type="text" id="amount" required>
       </div>
-
       <div class="form-group">
         <label>Date du paiement:</label>
         <input type="date" id="paymentDate" required>
       </div>
-
       <div class="form-group">
         <label>Nom du commercial FR:</label>
         <input type="text" id="yourName" required>
       </div>
-
       <button onclick="generateText()">Générer la lettre</button>
     </div>
-
     <div class="output-container">
       <h2>Lettre Générée:</h2>
       <div class="output-text" id="outputText"></div>
-      <button onclick="copyText()">📋 Copier</button>
+      <div class="button-container">
+        <button onclick="copyText()">📋 Copier</button>
+        <button onclick="downloadPDF()">⬇️ Télécharger PDF</button>
+      </div>
     </div>
   </div>
-
   <script>
     function generateText() {
-      // Récupérer les valeurs du formulaire
       const clientName = document.getElementById('clientName').value;
       const amount = document.getElementById('amount').value;
       const paymentDate = new Date(document.getElementById('paymentDate').value)
         .toLocaleDateString('fr-FR');
       const yourName = document.getElementById('yourName').value;
-
-      // Valeurs fixes
       const duration = 18;
       const companyName = "AM Service";
-
-      // Création du modèle de lettre
       const letter = `Objet : Confirmation du lancement de la procédure de résiliation
 
 Cher ${clientName},
@@ -144,19 +163,24 @@ Dans l’attente, nous vous remercions pour votre confiance et vous prions d’a
 ${yourName}
 ${companyName}`;
 
-      // Afficher la lettre générée
       document.getElementById('outputText').textContent = letter;
     }
 
     function copyText() {
       const letterText = document.getElementById('outputText').textContent;
       navigator.clipboard.writeText(letterText)
-        .then(() => {
-          alert("Texte copié !");
-        })
-        .catch(err => {
-          alert("Erreur lors de la copie !");
-        });
+        .then(() => alert("Texte copié !"))
+        .catch(() => alert("Erreur lors de la copie !"));
+    }
+
+    function downloadPDF() {
+      const { jsPDF } = window.jspdf;
+      const letterText = document.getElementById('outputText').textContent;
+      const doc = new jsPDF();
+      // Split text into lines that fit within a width of 180 units
+      const lines = doc.splitTextToSize(letterText, 180);
+      doc.text(lines, 10, 10);
+      doc.save('lettre.pdf');
     }
   </script>
 </body>
